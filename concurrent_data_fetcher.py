@@ -2,8 +2,7 @@ import csv
 import requests
 import os
 from multiprocessing import Pool
-import signal
-import sys
+import time
 
 # Function to fetch open interest data
 def fetch_open_interest_data(symbol):
@@ -31,7 +30,13 @@ def fetch_kline_data(symbol):
 
 # Function to calculate volume_delta
 def calculate_volume_delta(data):
-    return data[9] - (data[5] - data[9])
+    try:
+        taker_buy_volume = float(data[9])
+        volume = float(data[5])
+        return taker_buy_volume - (volume - taker_buy_volume)
+    except ValueError:
+        print("Invalid data format. Could not calculate volume_delta.")
+        return None
 
 # Function to save data to CSV
 def save_to_csv(args):
@@ -45,17 +50,13 @@ def save_to_csv(args):
 
     data = [open_interest, open_interest_value, kline_data[1], kline_data[2], kline_data[3], kline_data[4], kline_data[5], kline_data[8], taker_buy_volume, kline_data[10], volume_delta]
 
-    if not os.path.exists(filename):
-        print(f"CSV file not found for {symbol}. Skipping.")
-        return
-
     try:
-        with open(filename, mode='w', newline='') as file:
+        with open(filename, mode='a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(headers)
+            if os.path.getsize(filename) == 0:  # Check if file is empty
+                writer.writerow(headers)  # Write headers if file is empty
             writer.writerow(data)
-
-        print(f"Data saved to {filename}.")
+        print(f"Data appended to {filename}.")
     except Exception as e:
         print(f"Failed to write data to {filename}: {str(e)}")
 
@@ -67,7 +68,7 @@ def reset_csv_files():
             with open(filename, mode='w', newline='') as file:
                 pass  # Clear content
 
-# Run the script concurrently for each CSV file in the concurrent_data folder
+# Function to process CSV file
 def process_csv_file(csv_file):
     symbol = csv_file.split('_')[0]
 
@@ -78,15 +79,14 @@ def process_csv_file(csv_file):
         filename = os.path.join('concurrent_data', csv_file)
         save_to_csv((filename, open_interest, open_interest_value, kline_data))
 
-def signal_handler(signal, frame):
-    print("\nReceived signal to terminate. Exiting gracefully...")
-    sys.exit(0)
-
+# Run the script periodically with a delay of 5 minutes
 if __name__ == "__main__":
-    csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')]
-    signal.signal(signal.SIGINT, signal_handler)  # Register the signal handler
+    while True:
+        csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')]
 
-    reset_csv_files()
+        reset_csv_files()
 
-    with Pool(4) as pool:
-        pool.map(process_csv_file, csv_files)
+        with Pool(4) as pool:
+            pool.map(process_csv_file, csv_files)
+
+        time.sleep(300)  # Delay for 5 minutes before running again
