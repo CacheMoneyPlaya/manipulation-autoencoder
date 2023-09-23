@@ -6,6 +6,9 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.callbacks import ModelCheckpoint
 
+
+# Generates training data, one off already done
+
 # Constants
 SEQUENCE_LENGTH = 200  # Number of time steps to consider for prediction
 

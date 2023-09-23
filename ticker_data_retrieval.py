@@ -7,6 +7,8 @@ import pandas as pd
 from tqdm import tqdm
 import os
 
+# This needs to be run as a one off - already done
+
 # Function to download and merge data
 def download_and_merge_data(url, payload):
     response = requests.post(url, json=payload)

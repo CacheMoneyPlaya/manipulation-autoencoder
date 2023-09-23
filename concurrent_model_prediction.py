@@ -1,58 +1,67 @@
-import time
 import os
-import numpy as np
-from tensorflow.keras.models import load_model
+import argparse
 import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import load_model
 
 # Constants
-FOLDER_PATH = "concurrent_data"  # Folder containing CSV files
-MODEL_PATH = "manipulation_surge_model.h5"  # Trained model path
-SEQUENCE_LENGTH = 200  # Number of time steps to consider for prediction
+SEQUENCE_LENGTH = 200
 
-def load_latest_data():
-    # Load the latest data from CSV files
-    data = []
-    for file_name in os.listdir(FOLDER_PATH):
-        if file_name.endswith('.csv'):
-            file_path = os.path.join(FOLDER_PATH, file_name)
-            df = pd.read_csv(file_path, header=0)
-            data.append(df.values[1:SEQUENCE_LENGTH+1])  # Exclude headers and take the first 200 rows
+def normalize_data(data):
+    # Normalize each column as a sample of a larger population
+    for column in data.columns:
+        # Min-max scaling
+        min_val = data[column].min()
+        max_val = data[column].max()
+        data[column] = (data[column] - min_val) / (max_val - min_val)
 
-    return np.array(data)
+    return data
 
-def predict_manipulation(model, data):
-    # Preprocess the data
-    X = data[:, :-1]  # Features (all columns except the last)
-    X = X.reshape(1, SEQUENCE_LENGTH, X.shape[1])  # Reshape to 3D shape (samples, time steps, features)
+def process_file(file_path, model):
+    # Load the CSV file into a DataFrame
+    df = pd.read_csv(file_path)
 
-    # Predict manipulation chances
-    prediction = model.predict(X)[0, 0]
+    # Select the last 200 rows, if available
+    if len(df) >= SEQUENCE_LENGTH:
+        df = df.iloc[-SEQUENCE_LENGTH:]
 
-    return prediction
+        # Normalize the data
+        df = normalize_data(df)
+
+        # Prepare the data for prediction
+        X = np.array(df.values).reshape(1, SEQUENCE_LENGTH, len(df.columns))
+
+        # Predict using the loaded model
+        prediction = model.predict(X)[0][0] * 100  # Convert to percentage
+
+        # Get the file name for output
+        file_name = os.path.basename(file_path)
+        symbol = file_name.split('_')[0]
+
+        print(f"{symbol} @ {prediction:.2f}%")
+
+def main():
+    parser = argparse.ArgumentParser(description="Model inference on CSV data.")
+    parser.add_argument("-f", "--model_file", help="Model file to load", required=True)
+    args = parser.parse_args()
+
+    # Load the LSTM model
+    model = load_model(args.model_file)
+
+    # Run the process every 5 minutes
+    while True:
+        try:
+            for file_name in os.listdir('concurrent_data'):
+                if file_name.endswith('.csv'):
+                    file_path = os.path.join('concurrent_data', file_name)
+                    process_file(file_path, model)
+
+            # Wait for 5 minutes
+            time.sleep(300)
+        except KeyboardInterrupt:
+            print("Process interrupted. Exiting gracefully.")
+            break
 
 if __name__ == "__main__":
-    # Load the trained model
-    model = load_model(MODEL_PATH)
-
-    try:
-        while True:
-            # Load the latest data from CSV files
-            data = load_latest_data()
-
-            if data.size == 0:
-                print("No new data available. Waiting for the next update...")
-            else:
-                # Extract the symbol from the file name
-                symbol = os.listdir(FOLDER_PATH)[0].split('_')[0]
-
-                # Predict manipulation chances
-                prediction = predict_manipulation(model, data)
-
-                # Output prediction
-                print(f"{symbol} @ {prediction*100:.2f}%")
-
-            # Wait for 5 minutes and 10 seconds
-            time.sleep(5 * 60 + 10)
-
-    except KeyboardInterrupt:
-        print("Keyboard interrupt detected. Exiting gracefully.")
+    main()
