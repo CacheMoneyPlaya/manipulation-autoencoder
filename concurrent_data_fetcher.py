@@ -1,6 +1,5 @@
-import csv
-import requests
 import os
+import requests
 from multiprocessing import Pool
 import time
 from datetime import datetime, timedelta
@@ -8,9 +7,10 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import load_model
 import numpy as np
+import csv
 
-# Load the pre-trained neural network model
-model = load_model('manipulation_surge_model.h5')
+# Load the pre-trained autoencoder model
+model = load_model('autoencoder_model.h5')
 
 # Function to fetch open interest data
 def fetch_open_interest_data(symbol, limit=1):
@@ -111,13 +111,13 @@ if __name__ == "__main__":
     while True:
         now = datetime.now()
         if now.minute % 1 == 0:  # Run at 5-minute intervals
-            csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')][:10]
+            csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')]
 
             with Pool(6) as pool:
                 pool.map(process_csv_file, csv_files)
 
             # Process and normalize each CSV file
-            for csv_file in csv_files[:10]:
+            for csv_file in csv_files:
                 csv_file_path = os.path.join('concurrent_data', csv_file)
                 try:
                     # Load the CSV file into a DataFrame
@@ -135,21 +135,26 @@ if __name__ == "__main__":
                     # Read the data (excluding the header) and convert to numpy array
                     data = np.genfromtxt(csv_file_path, delimiter=',', skip_header=1)
 
-                    # Reshape the data to match the model's expected input shape
+                    # Reshape the data to match the model's expected input shape for an autoencoder
                     data = data.reshape((1, 200, 12))
 
-                    # Feed data to the model
-                    model_output = model.predict(data)
+                    # Predict using the autoencoder model
+                    decoded_data = model.predict(data)
 
                     # Get the symbol from the file name
                     symbol = csv_file.split('_')[0]
 
-                    # Print symbol and model output for the first 10 CSVs
-                    print(f"Symbol: {symbol}, Model Output: {model_output}")
+                    # Calculate MSE as a percentage
+                    mse_percentage = np.mean(np.square(data - decoded_data))
+
+                    # Invert the percentage (higher similarity should result in higher percentage)
+                    inverted_percentage = 100 - mse_percentage
+
+                    print(f"{symbol} - {mse_percentage:.4f}")
 
                 except Exception as e:
                     print(f"Error processing {csv_file_path}: {str(e)}")
 
-            time.sleep(60)  # Delay for 1 minute before running again
+            time.sleep(300)  # Delay for 5 minutes before running again
         else:
             time.sleep(1)  # Wait for 1 second before checking again
