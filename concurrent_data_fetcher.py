@@ -149,16 +149,16 @@ if __name__ == "__main__":
     while True:
         now = datetime.now()
         if now.minute % 5 == 0:  # Run at 5-minute intervals
+            current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            print("________________________________________________________________________")
+            print("Current Timestamp with Hours and Minutes:", current_timestamp)
             csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')]
 
             with Pool(6) as pool:
                 pool.map(process_csv_file, csv_files)
 
             # Get the current timestamp with hours and minutes
-            current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
             # Print the timestamp
-            print("________________________________________________________________________")
-            print("Current Timestamp with Hours and Minutes:", current_timestamp)
             print("Latest data fully retieved..")
 
             # Process and normalize each CSV file
@@ -194,10 +194,10 @@ if __name__ == "__main__":
                     # Send the message to Discord webhook if Cosine Sim is greater than 0.98
                     if cosine_sim >= 0.98:
                         send_to_discord_webhook(message)
-
                 except Exception as e:
                     print(f"Error processing {csv_file_path}: {str(e)}")
 
+            print('Round Complete')
             time.sleep(300)  # Delay for 5 minutes before running again
         else:
             time.sleep(1)
