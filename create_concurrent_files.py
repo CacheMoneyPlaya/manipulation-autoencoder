@@ -3,6 +3,8 @@ import csv
 import requests
 from binance.client import Client
 
+# Run this to create the concurrent files, based off avialble Binance tickers
+
 # Function to check if a symbol contains certain words
 def contains_invalid_words(symbol):
     invalid_words = ['BULL', 'BEAR', 'UP', 'DOWN']

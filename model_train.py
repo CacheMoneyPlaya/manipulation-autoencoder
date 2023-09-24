@@ -3,13 +3,16 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, Input
+from tensorflow.keras.models import Model
+
+# Train the model from all the training data folder's files
 
 # Constants
-SEQUENCE_LENGTH = 200
+SEQUENCE_LENGTH = 25
 NUM_FEATURES = 12
 BATCH_SIZE = 32
-EPOCHS = 10
+EPOCHS = 20  # Increased epochs for better training
 
 # Function to load and preprocess a single CSV file
 def load_and_preprocess_data(file_path):
@@ -31,9 +34,12 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 
 # Define the model
 model = Sequential([
-    LSTM(units=64, input_shape=(SEQUENCE_LENGTH, NUM_FEATURES), return_sequences=True),
-    LSTM(units=32),
-    Dense(units=NUM_FEATURES, activation='sigmoid')
+    Input(shape=(SEQUENCE_LENGTH, NUM_FEATURES)),  # Input layer for sequences
+    LSTM(units=128, activation='relu', return_sequences=True),  # Encoder
+    LSTM(units=64, activation='relu', return_sequences=False),  # Encoder
+    Dense(units=64, activation='relu'),  # Decoder
+    Dense(units=128, activation='relu'),  # Decoder
+    Dense(units=NUM_FEATURES, activation='linear')  # Output layer
 ])
 
 model.compile(loss='mean_squared_error', optimizer='adam')

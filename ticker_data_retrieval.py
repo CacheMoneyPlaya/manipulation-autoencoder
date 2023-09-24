@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 import os
 
-# This needs to be run as a one off - already done
+# Run this with asked for input to generate the historical data to build training data off
 
 # Function to download and merge data
 def download_and_merge_data(url, payload):

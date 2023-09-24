@@ -40,15 +40,16 @@ def analyze_data(input_csv):
         sixth_close = window['close'].iloc[-1]
 
         # Check for an increase of more than 5% between the 1st and 6th close values
-        if sixth_close > first_close * 1.025:
+        if sixth_close > first_close * 1.05:
             # Check if there are at least 200 rows before the 1st row of the rolling window
-            if i >= 200:
+            if i >= 25:
                 # Check if the 200 rows have not been used in previous rolling windows
-                if all(idx not in used_indices for idx in range(i-199, i+1)):
-                    used_indices.update(range(i-199, i+1))
+                if all(idx not in used_indices for idx in range(i-24, i+1)):
+                    used_indices.update(range(i-24, i+1))
 
                     # Extract the previous 200 rows of data
-                    training_data = df.iloc[i-200:i]  # Original 200 rows
+                    training_data = df.iloc[i-25:i]  # Original 200 rows
+                    training_data = training_data.sort_values(by='create_time', ascending=True).copy()
 
                     # Remove 'create_time' and 'symbol' columns
                     training_data = training_data.drop(columns=['create_time', 'symbol'])
