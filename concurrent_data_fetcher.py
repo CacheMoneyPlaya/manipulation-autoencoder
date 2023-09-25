@@ -144,15 +144,43 @@ def calculate_cosine_similarity(data, decoded_data):
     return cosine_sim.mean()  # Return the mean cosine similarity
 
 
+def send_heartbeat():
+    webhook_url = "https://discord.com/api/webhooks/1155503541562114109/84mkMKX4KLQ30EQi0SQSjWfx1HyuCRHZb0kwVOVwNRrSDGRbJIlSEkTT2s6ptIIiU3VB"
+    message = "Hourly Heartbeat Check"
+
+    payload = {
+        "content": message
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(webhook_url, data=json.dumps(payload), headers=headers)
+        if response.status_code == 204:
+            print("Heartbeat message sent successfully.")
+        else:
+            print(f"Failed to send heartbeat. Status code: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+
 if __name__ == "__main__":
     # Run the script periodically at 5-minute intervals within an hour
     while True:
+
+        # Get the current time
+        now = datetime.datetime.now()
+        # Check if it's the desired hour (e.g., 1 PM, 2 PM, etc.)
+        if now.minute == 0:
+            send_heartbeat()
+
         current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         print("________________________________________________________________________")
         print("Current Timestamp with Hours and Minutes:", current_timestamp)
         csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')]
 
-        with Pool(6) as pool:
+        with Pool(3) as pool:
             pool.map(process_csv_file, csv_files)
 
         # Get the current timestamp with hours and minutes
