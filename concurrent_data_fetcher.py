@@ -147,57 +147,57 @@ def calculate_cosine_similarity(data, decoded_data):
 if __name__ == "__main__":
     # Run the script periodically at 5-minute intervals within an hour
     while True:
-        now = datetime.now()
-        if now.minute % 5 == 0:  # Run at 5-minute intervals
-            current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-            print("________________________________________________________________________")
-            print("Current Timestamp with Hours and Minutes:", current_timestamp)
-            csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')]
+        current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        print("________________________________________________________________________")
+        print("Current Timestamp with Hours and Minutes:", current_timestamp)
+        csv_files = [csv_file for csv_file in os.listdir('concurrent_data') if csv_file.endswith('.csv')]
 
-            with Pool(6) as pool:
-                pool.map(process_csv_file, csv_files)
+        with Pool(6) as pool:
+            pool.map(process_csv_file, csv_files)
 
-            # Get the current timestamp with hours and minutes
-            # Print the timestamp
-            print("Latest data fully retieved..")
+        # Get the current timestamp with hours and minutes
+        # Print the timestamp
+        print("Latest data fully retieved..")
 
-            # Process and normalize each CSV file
-            for csv_file in csv_files:
-                csv_file_path = os.path.join('concurrent_data', csv_file)
-                try:
-                    # Load the CSV file into a DataFrame
-                    df = pd.read_csv(csv_file_path)
+        # Process and normalize each CSV file
+        for csv_file in csv_files:
+            csv_file_path = os.path.join('concurrent_data', csv_file)
+            try:
+                # Load the CSV file into a DataFrame
+                df = pd.read_csv(csv_file_path)
 
-                    # Iterate through each column
-                    for col in df.columns:
-                        # Normalize and min-max the column
-                        df[col] = normalize_column(df[col])
+                # Iterate through each column
+                for col in df.columns:
+                    # Normalize and min-max the column
+                    df[col] = normalize_column(df[col])
 
-                    # Save the normalized data back to the same CSV file
-                    df.to_csv(csv_file_path, index=False)
+                # Save the normalized data back to the same CSV file
+                df.to_csv(csv_file_path, index=False)
 
-                    # Read the data (excluding the header) and convert to numpy array
-                    data = np.genfromtxt(csv_file_path, delimiter=',', skip_header=1)
+                # Read the data (excluding the header) and convert to numpy array
+                data = np.genfromtxt(csv_file_path, delimiter=',', skip_header=1)
 
-                    # Reshape the data to match the model's expected input shape for an autoencoder
-                    data = data.reshape((1, 25, 12))
+                # Reshape the data to match the model's expected input shape for an autoencoder
+                data = data.reshape((1, 25, 12))
 
-                    # Predict using the autoencoder model
-                    decoded_data = model.predict(data, verbose=0)
+                # Predict using the autoencoder model
+                decoded_data = model.predict(data, verbose=0)
 
-                    # Get the symbol from the file name
-                    symbol = csv_file.split('_')[0]
+                # Get the symbol from the file name
+                symbol = csv_file.split('_')[0]
 
-                    cosine_sim = calculate_cosine_similarity(data, decoded_data)
+                cosine_sim = calculate_cosine_similarity(data, decoded_data)
 
+                message = symbol + ' with Cosine Sim of: ' + str(cosine_sim)
 
-                    # Send the message to Discord webhook if Cosine Sim is greater than 0.98
-                    if cosine_sim >= 0.98:
-                        send_to_discord_webhook(message)
-                except Exception as e:
-                    print(f"Error processing {csv_file_path}: {str(e)}")
+                print(message)
 
-            print('Round Complete')
-            time.sleep(300)  # Delay for 5 minutes before running again
-        else:
-            time.sleep(1)
+                # Send the message to Discord webhook if Cosine Sim is greater than 0.98
+                if cosine_sim >= 0.95:
+                    send_to_discord_webhook(message)
+
+            except Exception as e:
+                print(f"Error processing {csv_file_path}: {str(e)}")
+
+        print('Round Complete')
+        time.sleep(300)  # Delay for 5 minutes before running again
