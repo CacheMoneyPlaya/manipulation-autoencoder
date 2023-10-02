@@ -11,6 +11,11 @@ from the Binance API (Among other features that were calculated on the fly) and
 will then output a 12x1 data structure which I run a Cosine Similarity test against
 to determine if the model was able to detect these apparent volatility surges.
 
+The output of the model is essentially a 1 dimensional attempt at the model trying to
+recrate the input data from its training data, the Cosine similarity test will then give
+us an idea of how similar the data structure is to the input, high confidence means a 'normal'
+output was generated suggesting possible volatility incoming.
+
 It was trained on about 5000 data sets of 5 min data upto 2 hours prior to historical
 surges in an attempt to decode subtle patterns that occur before/during distribution
 events. The code is also readily available to generate new training data sets.
