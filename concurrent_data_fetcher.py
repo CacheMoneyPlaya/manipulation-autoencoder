@@ -9,10 +9,14 @@ from tensorflow.keras.models import load_model
 import numpy as np
 import csv
 from sklearn.metrics.pairwise import cosine_similarity
+import json
 
 # Run this to grab latest 200 data points of data, format it, normalize it and then feed into the model
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0 (default) shows all, 2 suppresses INFO messages, 3 also suppresses WARNING messages
-
+# Initialize variables to store the highest cosine similarity and its associated symbol and timestamp
+highest_cosine_similarity = 0.0
+highest_cosine_similarity_symbol = ""
+highest_cosine_similarity_timestamp = ""
 # Load the pre-trained autoencoder model
 model = load_model('autoencoder_model.h5')
 # Dictionary to track MSE for each symbol
@@ -170,10 +174,7 @@ if __name__ == "__main__":
     while True:
 
         # Get the current time
-        now = datetime.datetime.now()
-        # Check if it's the desired hour (e.g., 1 PM, 2 PM, etc.)
-        if now.minute == 0:
-            send_heartbeat()
+        now = datetime.now()
 
         current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         print("________________________________________________________________________")
@@ -216,16 +217,22 @@ if __name__ == "__main__":
 
                 cosine_sim = calculate_cosine_similarity(data, decoded_data)
 
+                if cosine_sim > highest_cosine_similarity:
+                    highest_cosine_similarity = cosine_sim
+                    highest_cosine_similarity_symbol = symbol
+                    highest_cosine_similarity_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+
                 message = symbol + ' with Cosine Sim of: ' + str(cosine_sim)
 
                 print(message)
 
                 # Send the message to Discord webhook if Cosine Sim is greater than 0.98
-                if cosine_sim >= 0.95:
+                if cosine_sim >= 0.94:
                     send_to_discord_webhook(message)
 
             except Exception as e:
                 print(f"Error processing {csv_file_path}: {str(e)}")
 
+        print(f"Highest Cosine Similarity: {highest_cosine_similarity}, Symbol: {highest_cosine_similarity_symbol}, Timestamp: {highest_cosine_similarity_timestamp}")
         print('Round Complete')
         time.sleep(300)  # Delay for 5 minutes before running again
