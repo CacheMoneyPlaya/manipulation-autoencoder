@@ -171,9 +171,6 @@ if __name__ == "__main__":
 
         # Get the current time
         now = datetime.datetime.now()
-        # Check if it's the desired hour (e.g., 1 PM, 2 PM, etc.)
-        if now.minute == 0:
-            send_heartbeat()
 
         current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         print("________________________________________________________________________")
