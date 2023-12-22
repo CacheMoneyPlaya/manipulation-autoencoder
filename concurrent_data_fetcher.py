@@ -112,7 +112,7 @@ def normalize_column(column_data):
     return normalized_column
 
 def send_to_discord_webhook(content):
-    webhook_url = 'https://discord.com/api/webhooks/1155503541562114109/84mkMKX4KLQ30EQi0SQSjWfx1HyuCRHZb0kwVOVwNRrSDGRbJIlSEkTT2s6ptIIiU3VB'
+    webhook_url = ''
     payload = {'content': content}
     headers = {'Content-Type': 'application/json'}
 
