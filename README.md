@@ -41,3 +41,4 @@ python3 ticker_data_retrieval (Will run a script to fetch any avaibale Binance t
 
 ![CHR](https://i.imgur.com/eYUU8Fq.png)
 ![STORJ](https://i.imgur.com/6ovde4I.png)
+![MATIC](https://i.imgur.com/EfuPxkt.png)
