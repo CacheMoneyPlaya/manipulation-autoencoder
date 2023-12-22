@@ -145,7 +145,7 @@ def calculate_cosine_similarity(data, decoded_data):
 
 
 def send_heartbeat():
-    webhook_url = "https://discord.com/api/webhooks/1155503541562114109/84mkMKX4KLQ30EQi0SQSjWfx1HyuCRHZb0kwVOVwNRrSDGRbJIlSEkTT2s6ptIIiU3VB"
+    webhook_url = ""
     message = "Hourly Heartbeat Check"
 
     payload = {
